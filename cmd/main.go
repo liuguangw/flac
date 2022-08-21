@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/liuguangw/flac"
 	"github.com/liuguangw/flac/meta"
+	"os"
 )
 
 func main() {
@@ -41,10 +42,45 @@ func main() {
 					panic(err)
 				}
 				item.Data = newData
-				if err := stream.SaveFile("E:\\go_projects\\src\\hello\\qmm.flac"); err != nil {
-					panic(err)
-				}
 			}
+		} else if header.BlockType() == meta.BlockTypePicture {
+			picture, err := item.Data.ParseBlockDataPicture()
+			if err != nil {
+				panic(err)
+			}
+			fmt.Println(picture.PictureType, picture.MimeType)
 		}
 	}
+	pictureBlock, err := createFlacMetaPicture("C:\\Users\\liuguang\\Pictures\\TEHeTtW2_400x400.jpg")
+	if err != nil {
+		panic(err)
+	}
+	stream.BlockList = append(stream.BlockList, pictureBlock)
+	if err := stream.SaveFile("E:\\go_projects\\src\\hello\\qmm.flac"); err != nil {
+		panic(err)
+	}
+}
+
+// createFlacMetaPicture 写入封面图
+func createFlacMetaPicture(fPath string) (*meta.Block, error) {
+	picture := new(meta.BlockDataPicture)
+	picture.MimeType = "image/jpeg"
+	picture.PictureType = meta.PictureTypeFrontCover
+	f, err := os.OpenFile(fPath, os.O_RDONLY, 0400)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	if err := picture.FillFromReader(f); err != nil {
+		return nil, err
+	}
+	//构造block
+	block := new(meta.Block)
+	block.Header.SetBlockType(meta.BlockTypePicture)
+	newData, err := picture.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	block.Data = newData
+	return block, nil
 }

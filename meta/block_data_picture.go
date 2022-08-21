@@ -46,7 +46,7 @@ type BlockDataPicture struct {
 func parseBlockDataPicture(data []byte) (*BlockDataPicture, error) {
 	var (
 		tmpLength        uint32
-		binaryOrder      = binary.LittleEndian
+		binaryOrder      = binary.BigEndian
 		blockDataPicture = new(BlockDataPicture)
 	)
 	buf := bytes.NewBuffer(data)
@@ -54,7 +54,7 @@ func parseBlockDataPicture(data []byte) (*BlockDataPicture, error) {
 		return nil, err
 	}
 	//MimeType
-	if err := binary.Read(buf, binaryOrder, tmpLength); err != nil {
+	if err := binary.Read(buf, binaryOrder, &tmpLength); err != nil {
 		return nil, err
 	}
 	if tmpLength > 0 {
@@ -69,7 +69,7 @@ func parseBlockDataPicture(data []byte) (*BlockDataPicture, error) {
 		blockDataPicture.MimeType = string(binaryData)
 	}
 	//Description
-	if err := binary.Read(buf, binaryOrder, tmpLength); err != nil {
+	if err := binary.Read(buf, binaryOrder, &tmpLength); err != nil {
 		return nil, err
 	}
 	if tmpLength > 0 {
@@ -97,7 +97,7 @@ func parseBlockDataPicture(data []byte) (*BlockDataPicture, error) {
 		return nil, err
 	}
 	//ImageData
-	if err := binary.Read(buf, binaryOrder, tmpLength); err != nil {
+	if err := binary.Read(buf, binaryOrder, &tmpLength); err != nil {
 		return nil, err
 	}
 	if tmpLength > 0 {
@@ -127,6 +127,8 @@ func (blockDataPicture *BlockDataPicture) FillFromReader(r io.Reader) error {
 	if _, err := buff.ReadFrom(r); err != nil {
 		return err
 	}
+	blockDataPicture.ImageData = buff.Bytes()
+	//fmt.Println("FillFromReader", n)
 	return nil
 }
 
@@ -135,7 +137,7 @@ func (blockDataPicture *BlockDataPicture) Marshal() ([]byte, error) {
 	binaryData := make([]byte, 0, blockDataPicture.Length())
 	var (
 		tmpLength   uint32
-		binaryOrder = binary.LittleEndian
+		binaryOrder = binary.BigEndian
 	)
 	buf := bytes.NewBuffer(binaryData)
 	if err := binary.Write(buf, binaryOrder, blockDataPicture.PictureType); err != nil {
@@ -196,5 +198,5 @@ func (blockDataPicture *BlockDataPicture) Marshal() ([]byte, error) {
 			return nil, errors.New("write BlockDataPicture.ImageData failed")
 		}
 	}
-	return binaryData, nil
+	return buf.Bytes(), nil
 }
