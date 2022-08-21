@@ -1,4 +1,4 @@
-package flac
+package common
 
 import (
 	"errors"
@@ -12,6 +12,10 @@ type Stream struct {
 	handle    io.ReadSeekCloser
 	BlockList []*meta.Block
 	FrameData *frame.BinaryData
+}
+
+func NewStream(handle io.ReadSeekCloser) *Stream {
+	return &Stream{handle: handle}
 }
 
 // Close 调用Close会关闭底层的输入流
@@ -29,26 +33,16 @@ func (stream *Stream) Save(out io.Writer) error {
 	if n != 4 {
 		return errors.New("write fLaC tag failed")
 	}
-	blockCount := len(stream.BlockList)
+	lastBlockIndex := len(stream.BlockList) - 1
 	for blockIndex, blockInfo := range stream.BlockList {
-		//计算header
-		blockInfo.Header.SetLastBlock(blockIndex == blockCount-1)
-		blockInfo.Header.SetBlockLength(len(blockInfo.Data))
-		//写入Header
-		n, err = out.Write(blockInfo.Header.Bytes())
+		//是否为最后一个Block
+		blockInfo.SetLastBlock(blockIndex == lastBlockIndex)
+		blockData, err := blockInfo.Marshal()
 		if err != nil {
 			return err
 		}
-		if n != 4 {
-			return errors.New("write Block.Header failed")
-		}
-		//写入Data
-		n, err = out.Write(blockInfo.Data)
-		if err != nil {
+		if _, err := out.Write(blockData); err != nil {
 			return err
-		}
-		if n != blockInfo.Header.BlockLength() {
-			return errors.New("write Block.Data failed")
 		}
 	}
 	if _, err := stream.handle.Seek(stream.FrameData.Offset(), io.SeekStart); err != nil {

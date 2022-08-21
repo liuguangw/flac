@@ -43,82 +43,15 @@ type BlockDataPicture struct {
 	ImageData    []byte
 }
 
-func parseBlockDataPicture(data []byte) (*BlockDataPicture, error) {
-	var (
-		tmpLength        uint32
-		binaryOrder      = binary.BigEndian
-		blockDataPicture = new(BlockDataPicture)
-	)
-	buf := bytes.NewBuffer(data)
-	if err := binary.Read(buf, binaryOrder, &blockDataPicture.PictureType); err != nil {
-		return nil, err
-	}
-	//MimeType
-	if err := binary.Read(buf, binaryOrder, &tmpLength); err != nil {
-		return nil, err
-	}
-	if tmpLength > 0 {
-		binaryData := make([]byte, tmpLength)
-		n, err := buf.Read(binaryData)
-		if err != nil {
-			return nil, err
-		}
-		if uint32(n) != tmpLength {
-			return nil, errors.New("read BlockDataPicture.MimeType failed")
-		}
-		blockDataPicture.MimeType = string(binaryData)
-	}
-	//Description
-	if err := binary.Read(buf, binaryOrder, &tmpLength); err != nil {
-		return nil, err
-	}
-	if tmpLength > 0 {
-		binaryData := make([]byte, tmpLength)
-		n, err := buf.Read(binaryData)
-		if err != nil {
-			return nil, err
-		}
-		if uint32(n) != tmpLength {
-			return nil, errors.New("read BlockDataPicture.Description failed")
-		}
-		blockDataPicture.Description = string(binaryData)
-	}
-	//
-	if err := binary.Read(buf, binaryOrder, &blockDataPicture.Width); err != nil {
-		return nil, err
-	}
-	if err := binary.Read(buf, binaryOrder, &blockDataPicture.Height); err != nil {
-		return nil, err
-	}
-	if err := binary.Read(buf, binaryOrder, &blockDataPicture.ColorDepth); err != nil {
-		return nil, err
-	}
-	if err := binary.Read(buf, binaryOrder, &blockDataPicture.IndexedColor); err != nil {
-		return nil, err
-	}
-	//ImageData
-	if err := binary.Read(buf, binaryOrder, &tmpLength); err != nil {
-		return nil, err
-	}
-	if tmpLength > 0 {
-		binaryData := make([]byte, tmpLength)
-		n, err := buf.Read(binaryData)
-		if err != nil {
-			return nil, err
-		}
-		if uint32(n) != tmpLength {
-			return nil, errors.New("read BlockDataPicture.ImageData failed")
-		}
-		blockDataPicture.ImageData = binaryData
-	}
-	return blockDataPicture, nil
+func (blockDataPicture *BlockDataPicture) BlockType() byte {
+	return BlockTypePicture
 }
 
-func (blockDataPicture *BlockDataPicture) Length() int64 {
-	dataLength := 4 + 4 + int64(len(blockDataPicture.MimeType)) +
-		4 + int64(len(blockDataPicture.Description)) +
+func (blockDataPicture *BlockDataPicture) Length() int {
+	dataLength := 4 + 4 + len(blockDataPicture.MimeType) +
+		4 + len(blockDataPicture.Description) +
 		16 + 4 +
-		int64(len(blockDataPicture.ImageData))
+		len(blockDataPicture.ImageData)
 	return dataLength
 }
 
@@ -133,70 +66,68 @@ func (blockDataPicture *BlockDataPicture) FillFromReader(r io.Reader) error {
 }
 
 // Marshal 序列化
-func (blockDataPicture *BlockDataPicture) Marshal() ([]byte, error) {
-	binaryData := make([]byte, 0, blockDataPicture.Length())
+func (blockDataPicture *BlockDataPicture) Marshal(buf *bytes.Buffer) error {
 	var (
 		tmpLength   uint32
 		binaryOrder = binary.BigEndian
 	)
-	buf := bytes.NewBuffer(binaryData)
 	if err := binary.Write(buf, binaryOrder, blockDataPicture.PictureType); err != nil {
-		return nil, err
+		return err
 	}
 	//MimeType
 	tmpLength = uint32(len(blockDataPicture.MimeType))
 	if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
-		return nil, err
+		return err
 	}
 	if tmpLength > 0 {
 		n, err := buf.WriteString(blockDataPicture.MimeType)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if uint32(n) != tmpLength {
-			return nil, errors.New("write BlockDataPicture.MimeType failed")
+			return errors.New("write BlockDataPicture.MimeType failed")
 		}
 	}
 	//Description
 	tmpLength = uint32(len(blockDataPicture.Description))
 	if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
-		return nil, err
+		return err
 	}
 	if tmpLength > 0 {
 		n, err := buf.WriteString(blockDataPicture.Description)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if uint32(n) != tmpLength {
-			return nil, errors.New("write BlockDataPicture.Description failed")
+			return errors.New("write BlockDataPicture.Description failed")
 		}
 	}
 	//
 	if err := binary.Write(buf, binaryOrder, blockDataPicture.Width); err != nil {
-		return nil, err
+		return err
 	}
 	if err := binary.Write(buf, binaryOrder, blockDataPicture.Height); err != nil {
-		return nil, err
+		return err
 	}
 	if err := binary.Write(buf, binaryOrder, blockDataPicture.ColorDepth); err != nil {
-		return nil, err
+		return err
 	}
 	if err := binary.Write(buf, binaryOrder, blockDataPicture.IndexedColor); err != nil {
-		return nil, err
+		return err
 	}
 	//ImageData
 	tmpLength = uint32(len(blockDataPicture.ImageData))
 	if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
-		return nil, err
+		return err
 	}
 	if tmpLength > 0 {
 		n, err := buf.Write(blockDataPicture.ImageData)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		if uint32(n) != tmpLength {
-			return nil, errors.New("write BlockDataPicture.ImageData failed")
+			return errors.New("write BlockDataPicture.ImageData failed")
 		}
 	}
-	return buf.Bytes(), nil
+	return nil
 }

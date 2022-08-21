@@ -13,42 +13,31 @@ func main() {
 		panic(err)
 	}
 	defer stream.Close()
-	for i, item := range stream.BlockList {
-		header := &item.Header
+	for i, block := range stream.BlockList {
 		fmt.Printf("BlockList[%d] is_last=%v, type=%d, length=%d\n",
-			i, header.IsLastBlock(), header.BlockType(), header.BlockLength())
-		if header.BlockType() == meta.BlockTypeVorbisComment {
-			dataVorbisComment, err := item.Data.ParseBlockDataVorbisComment()
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println("\tvendor=" + dataVorbisComment.Vendor)
+			i, block.IsLastBlock(), block.BlockType(), block.Data().Length())
+		switch blockData := block.Data().(type) {
+		case *meta.BlockDataVorbisComment:
+			fmt.Println("\tvendor=" + blockData.Vendor)
 			hasDate := false
-			for fieldIndex, fieldInfo := range dataVorbisComment.FieldList {
+			for fieldIndex, fieldInfo := range blockData.FieldList {
 				fmt.Printf("\t\tFieldList[%d] %s=%s\n", fieldIndex, fieldInfo[0], fieldInfo[1])
 				if fieldInfo[0] == "DATE" {
 					hasDate = true
 				}
 			}
 			if !hasDate {
-				dataVorbisComment.FieldList = append(dataVorbisComment.FieldList, [2]string{
+				blockData.FieldList = append(blockData.FieldList, [2]string{
 					"DATE", "2022-08-21",
 				})
-				dataVorbisComment.FieldList = append(dataVorbisComment.FieldList, [2]string{
+				blockData.FieldList = append(blockData.FieldList, [2]string{
 					"YEAR", "2022",
 				})
-				newData, err := dataVorbisComment.Marshal()
-				if err != nil {
-					panic(err)
-				}
-				item.Data = newData
 			}
-		} else if header.BlockType() == meta.BlockTypePicture {
-			picture, err := item.Data.ParseBlockDataPicture()
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(picture.PictureType, picture.MimeType)
+		case *meta.BlockDataPicture:
+			fmt.Println(blockData.PictureType, blockData.MimeType)
+		default:
+			fmt.Println("<nop>")
 		}
 	}
 	pictureBlock, err := createFlacMetaPicture("C:\\Users\\liuguang\\Pictures\\TEHeTtW2_400x400.jpg")
@@ -75,12 +64,7 @@ func createFlacMetaPicture(fPath string) (*meta.Block, error) {
 		return nil, err
 	}
 	//构造block
-	block := new(meta.Block)
-	block.Header.SetBlockType(meta.BlockTypePicture)
-	newData, err := picture.Marshal()
-	if err != nil {
-		return nil, err
-	}
-	block.Data = newData
+	block := meta.NewBlock(meta.BlockTypePicture)
+	block.SetData(picture)
 	return block, nil
 }
