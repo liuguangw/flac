@@ -3,12 +3,13 @@ package meta
 import (
 	"bytes"
 	"errors"
+	"io"
 )
 
 type BlockData interface {
 	BlockType() byte
 	Length() int
-	Marshal(buf *bytes.Buffer) error
+	Marshal(w io.Writer) error
 }
 
 type Block struct {

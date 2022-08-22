@@ -4,15 +4,27 @@ import (
 	"fmt"
 	"github.com/liuguangw/flac"
 	"github.com/liuguangw/flac/meta"
+	"io"
+	"log"
 	"os"
 )
 
 func main() {
-	stream, err := flac.ParseFile("E:\\go_projects\\src\\hello\\q_org.flac")
+	f, err := os.OpenFile("E:\\go_projects\\src\\hello\\q_org.flac", os.O_RDONLY, 0400)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
-	defer stream.Close()
+	defer f.Close()
+	if err := processMusic(f); err != nil {
+		log.Fatalln(err)
+	}
+}
+
+func processMusic(r io.Reader) error {
+	stream, err := flac.Parse(r)
+	if err != nil {
+		return err
+	}
 	for i, block := range stream.BlockList {
 		fmt.Printf("BlockList[%d] is_last=%v, type=%d, length=%d\n",
 			i, block.IsLastBlock(), block.BlockType(), block.Data().Length())
@@ -42,12 +54,13 @@ func main() {
 	}
 	pictureBlock, err := createFlacMetaPicture("C:\\Users\\liuguang\\Pictures\\TEHeTtW2_400x400.jpg")
 	if err != nil {
-		panic(err)
+		return err
 	}
 	stream.BlockList = append(stream.BlockList, pictureBlock)
 	if err := stream.SaveFile("E:\\go_projects\\src\\hello\\qmm.flac"); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 // createFlacMetaPicture 写入封面图

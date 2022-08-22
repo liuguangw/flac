@@ -2,25 +2,18 @@ package common
 
 import (
 	"errors"
-	"github.com/liuguangw/flac/frame"
 	"github.com/liuguangw/flac/meta"
 	"io"
 	"os"
 )
 
 type Stream struct {
-	handle    io.ReadSeekCloser
+	reader    io.Reader
 	BlockList []*meta.Block
-	FrameData *frame.BinaryData
 }
 
-func NewStream(handle io.ReadSeekCloser) *Stream {
-	return &Stream{handle: handle}
-}
-
-// Close 调用Close会关闭底层的输入流
-func (stream *Stream) Close() error {
-	return stream.handle.Close()
+func NewStream(reader io.Reader) *Stream {
+	return &Stream{reader: reader}
 }
 
 // Save 保存输出，输入流和输出流不能相同
@@ -45,10 +38,7 @@ func (stream *Stream) Save(out io.Writer) error {
 			return err
 		}
 	}
-	if _, err := stream.handle.Seek(stream.FrameData.Offset(), io.SeekStart); err != nil {
-		return err
-	}
-	if _, err := io.Copy(out, stream.handle); err != nil {
+	if _, err := io.Copy(out, stream.reader); err != nil {
 		return err
 	}
 	return nil

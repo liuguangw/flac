@@ -1,9 +1,9 @@
 package meta
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
+	"io"
 	"strconv"
 )
 
@@ -26,17 +26,17 @@ func (vorbisComment *BlockDataVorbisComment) Length() int {
 }
 
 // Marshal 序列化
-func (vorbisComment *BlockDataVorbisComment) Marshal(buf *bytes.Buffer) error {
+func (vorbisComment *BlockDataVorbisComment) Marshal(w io.Writer) error {
 	var (
 		tmpLength   uint32
 		binaryOrder = binary.LittleEndian
 	)
 	tmpLength = uint32(len(vorbisComment.Vendor))
-	if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
+	if err := binary.Write(w, binaryOrder, tmpLength); err != nil {
 		return err
 	}
 	if tmpLength > 0 {
-		n, err := buf.WriteString(vorbisComment.Vendor)
+		n, err := w.Write([]byte(vorbisComment.Vendor))
 		if err != nil {
 			return err
 		}
@@ -45,17 +45,17 @@ func (vorbisComment *BlockDataVorbisComment) Marshal(buf *bytes.Buffer) error {
 		}
 	}
 	tmpLength = uint32(len(vorbisComment.FieldList))
-	if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
+	if err := binary.Write(w, binaryOrder, tmpLength); err != nil {
 		return err
 	}
 	for fieldIndex := range vorbisComment.FieldList {
 		tmpStr := vorbisComment.FieldList[fieldIndex][0] + "=" + vorbisComment.FieldList[fieldIndex][1]
 		tmpLength = uint32(len(tmpStr))
-		if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
+		if err := binary.Write(w, binaryOrder, tmpLength); err != nil {
 			return err
 		}
 		if tmpLength > 0 {
-			n, err := buf.WriteString(tmpStr)
+			n, err := w.Write([]byte(tmpStr))
 			if err != nil {
 				return err
 			}

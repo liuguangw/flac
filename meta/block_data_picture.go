@@ -66,21 +66,21 @@ func (blockDataPicture *BlockDataPicture) FillFromReader(r io.Reader) error {
 }
 
 // Marshal 序列化
-func (blockDataPicture *BlockDataPicture) Marshal(buf *bytes.Buffer) error {
+func (blockDataPicture *BlockDataPicture) Marshal(w io.Writer) error {
 	var (
 		tmpLength   uint32
 		binaryOrder = binary.BigEndian
 	)
-	if err := binary.Write(buf, binaryOrder, blockDataPicture.PictureType); err != nil {
+	if err := binary.Write(w, binaryOrder, blockDataPicture.PictureType); err != nil {
 		return err
 	}
 	//MimeType
 	tmpLength = uint32(len(blockDataPicture.MimeType))
-	if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
+	if err := binary.Write(w, binaryOrder, tmpLength); err != nil {
 		return err
 	}
 	if tmpLength > 0 {
-		n, err := buf.WriteString(blockDataPicture.MimeType)
+		n, err := w.Write([]byte(blockDataPicture.MimeType))
 		if err != nil {
 			return err
 		}
@@ -90,11 +90,11 @@ func (blockDataPicture *BlockDataPicture) Marshal(buf *bytes.Buffer) error {
 	}
 	//Description
 	tmpLength = uint32(len(blockDataPicture.Description))
-	if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
+	if err := binary.Write(w, binaryOrder, tmpLength); err != nil {
 		return err
 	}
 	if tmpLength > 0 {
-		n, err := buf.WriteString(blockDataPicture.Description)
+		n, err := w.Write([]byte(blockDataPicture.Description))
 		if err != nil {
 			return err
 		}
@@ -103,25 +103,25 @@ func (blockDataPicture *BlockDataPicture) Marshal(buf *bytes.Buffer) error {
 		}
 	}
 	//
-	if err := binary.Write(buf, binaryOrder, blockDataPicture.Width); err != nil {
+	if err := binary.Write(w, binaryOrder, blockDataPicture.Width); err != nil {
 		return err
 	}
-	if err := binary.Write(buf, binaryOrder, blockDataPicture.Height); err != nil {
+	if err := binary.Write(w, binaryOrder, blockDataPicture.Height); err != nil {
 		return err
 	}
-	if err := binary.Write(buf, binaryOrder, blockDataPicture.ColorDepth); err != nil {
+	if err := binary.Write(w, binaryOrder, blockDataPicture.ColorDepth); err != nil {
 		return err
 	}
-	if err := binary.Write(buf, binaryOrder, blockDataPicture.IndexedColor); err != nil {
+	if err := binary.Write(w, binaryOrder, blockDataPicture.IndexedColor); err != nil {
 		return err
 	}
 	//ImageData
 	tmpLength = uint32(len(blockDataPicture.ImageData))
-	if err := binary.Write(buf, binaryOrder, tmpLength); err != nil {
+	if err := binary.Write(w, binaryOrder, tmpLength); err != nil {
 		return err
 	}
 	if tmpLength > 0 {
-		n, err := buf.Write(blockDataPicture.ImageData)
+		n, err := w.Write(blockDataPicture.ImageData)
 		if err != nil {
 			return err
 		}
