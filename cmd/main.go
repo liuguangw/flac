@@ -77,7 +77,7 @@ func createFlacMetaPicture(fPath string) (*meta.Block, error) {
 		return nil, err
 	}
 	//构造block
-	block := meta.NewBlock(meta.BlockTypePicture)
+	block := meta.NewBlock()
 	block.SetData(picture)
 	return block, nil
 }

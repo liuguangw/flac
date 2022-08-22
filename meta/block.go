@@ -18,8 +18,8 @@ type Block struct {
 	data      BlockData
 }
 
-func NewBlock(blockType byte) *Block {
-	return &Block{blockType: blockType}
+func NewBlock() *Block {
+	return &Block{blockType: BlockTypeInvalid}
 }
 
 func (b *Block) IsLastBlock() bool {
@@ -43,6 +43,9 @@ func (b *Block) SetData(data BlockData) {
 	b.blockType = data.BlockType()
 }
 func (b *Block) Marshal() ([]byte, error) {
+	if b.blockType == BlockTypeInvalid {
+		return nil, errors.New("invalid block type")
+	}
 	dataLength := b.data.Length()
 	binaryData := make([]byte, 0, 4+dataLength)
 	buf := bytes.NewBuffer(binaryData)

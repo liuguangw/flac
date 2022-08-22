@@ -16,7 +16,7 @@ func parseMeta(reader io.Reader) (*meta.Block, error) {
 		return nil, errors.New("read block header failed")
 	}
 	blockType := header[0] & 0x7F
-	block := meta.NewBlock(blockType)
+	block := meta.NewBlock()
 	block.SetLastBlock((header[0] >> 7) == 1)
 	blockDataLength := (int(header[1]) << 16) + (int(header[2]) << 8) + int(header[3])
 	blockData := make([]byte, blockDataLength)
@@ -27,6 +27,11 @@ func parseMeta(reader io.Reader) (*meta.Block, error) {
 		return nil, errors.New("read block data failed")
 	}
 	//根据类型解析
+	if blockType >= meta.BlockTypeReserved && blockType < meta.BlockTypeInvalid {
+		blockType = meta.BlockTypeReserved
+	} else if blockType == meta.BlockTypeInvalid {
+		return nil, errors.New("invalid block type")
+	}
 	var blockDataInfo meta.BlockData
 	if blockType == meta.BlockTypeVorbisComment {
 		if blockDataInfo, err = parseBlockDataVorbisComment(blockData, blockDataLength); err != nil {
